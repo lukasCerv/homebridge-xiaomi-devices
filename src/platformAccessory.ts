@@ -8,7 +8,7 @@ const REFRESH_INTERVAL = 30; // seconds
 const OLD_CHARS_ACCEPTED = 0; // miliseconds
 
 abstract class Device {
-  private updateCharsTimeout: any;
+  private updateCharsTimeout = setTimeout(() => '', 1000);
   private lastUpdatedChars = 0;
 
   constructor(
@@ -27,7 +27,7 @@ abstract class Device {
     return this.platform.config.debugLogging;
   }
 
-  protected async updateChars(refreshDevice: () => Promise<any>) {
+  protected async updateChars(refreshDevice: () => Promise<void>) {
     clearTimeout(this.updateCharsTimeout);
     this.updateCharsTimeout = setTimeout(() => this.updateChars(refreshDevice), REFRESH_INTERVAL * 1000);
     if(Date.now() - this.lastUpdatedChars > OLD_CHARS_ACCEPTED) {
@@ -36,7 +36,7 @@ abstract class Device {
     this.lastUpdatedChars = Date.now();
   }
 
-  protected async runLoggedAction(action: () => Promise<any>, log = 'action') {
+  protected async runLoggedAction(action: () => Promise<void>, log = 'action') {
     if (this.isDebugLogging()) {
       this.platform.log.info('performing: \'' + log + '\' on \'' + this.accessory.context.device.name + '\'');
     }
@@ -45,8 +45,8 @@ abstract class Device {
       if (this.isDebugLogging()) {
         this.platform.log.info('done \'' + log + '\' on \'' + this.accessory.context.device.name + '\'');
       }
-    } catch (e: any) {
-      this.platform.log.error(e);
+    } catch (e: unknown) {
+      this.platform.log.error(e as string);
     }
   }
 }
@@ -102,7 +102,7 @@ abstract class Light extends Device {
     return Math.round(1000000 / value);
   }
 
-  protected get():any {
+  protected get():{[key: string]: () => number|boolean} {
     return {
       on: () => {
         return this.device.getPower();
@@ -111,7 +111,7 @@ abstract class Light extends Device {
         return this.device.getBrightness();
       },
       colorTemperature: () => {
-        return this.convertColorTemp(this.device.getColorTemperature());
+        return this.convertColorTemp(this.device.getColorTemperature() as number);
       },
     };
   }
@@ -143,8 +143,8 @@ export class CtMoonLight extends Light {
 
     try {
       this.device.connect(accessory.context.device.ipAddress, accessory.context.device.token);
-    } catch(e:any) {
-      this.platform.log.error(e);
+    } catch(e:unknown) {
+      this.platform.log.error(e as string);
     }
 
     this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature)
@@ -182,8 +182,8 @@ export class ColorLight extends Light {
 
     try {
       this.device.connect(accessory.context.device.ipAddress, accessory.context.device.token);
-    } catch(e:any) {
-      this.platform.log.error(e);
+    } catch(e:unknown) {
+      this.platform.log.error(e as string);
     }
 
     this.service.getCharacteristic(this.platform.Characteristic.ColorTemperature)
@@ -231,10 +231,10 @@ export class ColorLight extends Light {
   protected get() {
     const get = super.get();
     get.hue = () => {
-      return this.device.getHue();
+      return this.device.getHue() as number;
     };
     get.saturation = () => {
-      return this.device.getSaturation();
+      return this.device.getSaturation() as number;
     };
     return get;
   }
@@ -275,23 +275,28 @@ export class AirPurifier extends Device {
 
     try {
       this.device.connect(accessory.context.device.ipAddress, accessory.context.device.token);
-    } catch(e:any) {
-      this.platform.log.error(e);
+    } catch(e:unknown) {
+      this.platform.log.error(e as string);
     }
 
-    this.purifierService = this.accessory.getService(this.platform.Service.AirPurifier) || this.accessory.addService(this.platform.Service.AirPurifier);
+    this.purifierService = this.accessory.getService(this.platform.Service.AirPurifier) ||
+      this.accessory.addService(this.platform.Service.AirPurifier);
     this.setupPurifier();
 
-    this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor) || this.accessory.addService(this.platform.Service.TemperatureSensor);
+    this.temperatureService = this.accessory.getService(this.platform.Service.TemperatureSensor) ||
+      this.accessory.addService(this.platform.Service.TemperatureSensor);
     this.setupTemperature();
 
-    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor) || this.accessory.addService(this.platform.Service.HumiditySensor);
+    this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor) ||
+      this.accessory.addService(this.platform.Service.HumiditySensor);
     this.setupHumidity();
 
-    this.aqiService = this.accessory.getService(this.platform.Service.AirQualitySensor) || this.accessory.addService(this.platform.Service.AirQualitySensor);
+    this.aqiService = this.accessory.getService(this.platform.Service.AirQualitySensor) ||
+      this.accessory.addService(this.platform.Service.AirQualitySensor);
     this.setupAQI();
 
-    this.filterService = this.accessory.getService(this.platform.Service.FilterMaintenance) || this.accessory.addService(this.platform.Service.FilterMaintenance);
+    this.filterService = this.accessory.getService(this.platform.Service.FilterMaintenance) ||
+      this.accessory.addService(this.platform.Service.FilterMaintenance);
     this.setupFilter();
 
     this.updateChars();
@@ -299,13 +304,16 @@ export class AirPurifier extends Device {
 
   private get = {
     active: () => {
-      return (this.device.getMode() == AirPurifierDevice.MODE_IDLE ? this.platform.Characteristic.Active.INACTIVE : this.platform.Characteristic.Active.ACTIVE);
+      return (this.device.getMode() === AirPurifierDevice.MODE_IDLE ?
+        this.platform.Characteristic.Active.INACTIVE : this.platform.Characteristic.Active.ACTIVE);
     },
     currentState: () => {
-      return (this.device.getMode() == AirPurifierDevice.MODE_IDLE ? this.platform.Characteristic.CurrentAirPurifierState.INACTIVE : this.platform.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
+      return (this.device.getMode() === AirPurifierDevice.MODE_IDLE ?
+        this.platform.Characteristic.CurrentAirPurifierState.INACTIVE : this.platform.Characteristic.CurrentAirPurifierState.PURIFYING_AIR);
     },
     targetState: () => {
-      return (this.device.getMode() == AirPurifierDevice.MODE_FAVORITE ? this.platform.Characteristic.TargetAirPurifierState.MANUAL : this.platform.Characteristic.TargetAirPurifierState.AUTO);
+      return (this.device.getMode() === AirPurifierDevice.MODE_FAVORITE ?
+        this.platform.Characteristic.TargetAirPurifierState.MANUAL : this.platform.Characteristic.TargetAirPurifierState.AUTO);
     },
     favoriteLevel: () => {
       return this.device.getFavoriteLevel();
@@ -317,14 +325,14 @@ export class AirPurifier extends Device {
       return this.device.getHumidity();
     },
     aqi: () => {
-      return Math.ceil(this.device.getAQI()/15);
+      return Math.ceil(this.device.getAQI() as number/15);
     },
     filterChange: () => {
-      return this.device.getFilterLife() < 10;
+      return this.device.getFilterLife() as number < 10;
     },
     filterLifeLevel: () => {
       const life = this.device.getFilterLife();
-      return life > 100 ? 100 : life;
+      return life as number > 100 ? 100 : life;
     },
   };
 
@@ -365,7 +373,8 @@ export class AirPurifier extends Device {
       .onGet(this.get.targetState.bind(this))
       .onSet(async (state) => {
         await this.runLoggedAction(async () => {
-          await this.device.setMode(state == this.platform.Characteristic.TargetAirPurifierState.MANUAL ? AirPurifierDevice.MODE_FAVORITE : (this.device.isNightMode() ? AirPurifierDevice.MODE_SILENT : AirPurifierDevice.MODE_AUTO));
+          await this.device.setMode(state === this.platform.Characteristic.TargetAirPurifierState.MANUAL ?
+            AirPurifierDevice.MODE_FAVORITE : (this.device.isNightMode() ? AirPurifierDevice.MODE_SILENT : AirPurifierDevice.MODE_AUTO));
           await this.updateChars();
         }, 'set target state to ' + state);
       });
@@ -438,8 +447,8 @@ export class RobotVacuum extends Device {
 
     try {
       this.device.connect(vacuum.context.device.ipAddress, vacuum.context.device.token);
-    } catch(e:any) {
-      this.platform.log.error(e);
+    } catch(e:unknown) {
+      this.platform.log.error(e as string);
     }
 
     this.vacuumService = this.vacuum.getService(this.platform.Service.Switch) || this.vacuum.addService(this.platform.Service.Switch);
@@ -448,10 +457,12 @@ export class RobotVacuum extends Device {
     this.batteryService = this.vacuum.getService(this.platform.Service.Battery) || this.vacuum.addService(this.platform.Service.Battery);
     this.setupBattery();
 
-    this.fanService = this.vacuum.getService('fan_speed') || this.vacuum.addService(this.platform.Service.Fan, 'fan_speed', 'FAN_fan_speed');
+    this.fanService = this.vacuum.getService('fan_speed') ||
+      this.vacuum.addService(this.platform.Service.Fan, 'fan_speed', 'FAN_fan_speed');
     this.setupFan();
 
-    this.waterService = this.vacuum.getService('water_flow') || this.vacuum.addService(this.platform.Service.Fan, 'water_flow', 'FAN_water_flow');
+    this.waterService = this.vacuum.getService('water_flow') ||
+      this.vacuum.addService(this.platform.Service.Fan, 'water_flow', 'FAN_water_flow');
     this.setupWater();
 
     this.updateChars();
@@ -461,16 +472,17 @@ export class RobotVacuum extends Device {
 
   private get = {
     state: () => {
-      return this.device.getState() == VacuumDevice.STATE.CLEANING;
+      return this.device.getState() === VacuumDevice.STATE.CLEANING;
     },
     lowBattery: () => {
-      return (this.device.isBatteryLow() || this.device.getBattery() < 20);
+      return (this.device.isBatteryLow() || this.device.getBattery() as number < 20);
     },
     battery: () => {
       return this.device.getBattery();
     },
     charging: () => {
-      return this.device.getState() == VacuumDevice.STATE.CHARGING ? this.platform.Characteristic.ChargingState.CHARGING : this.platform.Characteristic.ChargingState.NOT_CHARGING;
+      return this.device.getState() === VacuumDevice.STATE.CHARGING ?
+        this.platform.Characteristic.ChargingState.CHARGING : this.platform.Characteristic.ChargingState.NOT_CHARGING;
     },
     fanSpeed: () => {
       return this.device.getFanSpeed();
@@ -602,7 +614,7 @@ export class MoonSwitch {
   }
 
   setOn(value: CharacteristicValue) {
-    if(value as boolean == this.nightMode) {
+    if(value as boolean === this.nightMode) {
       return;
     }
 
@@ -616,8 +628,8 @@ export class MoonSwitch {
       if (this.isDebugLogging()) {
         this.platform.log.info('night mode switch set successfully');
       }
-    } catch (e: any) {
-      this.platform.log.error(e);
+    } catch (e: unknown) {
+      this.platform.log.error(e as string);
     }
   }
 
