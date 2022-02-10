@@ -1,0 +1,1 @@
+Based on @viestursr/homebridge-xiaomi-yeelight, @aholstenson/miio. Number of dependencies is reduced and support for another devices is added based on inforation got from @rytilahti/python-miio. Currently supported and tested devices: Mi Smart LED Ceiling Light, Yeelight Staria Bedside Lamp, Yeelight Light Strip Plus, Mi Robot Vacuum Mop Essential and Air Purifier 2H.
