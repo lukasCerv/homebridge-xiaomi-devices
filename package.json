@@ -1,5 +1,5 @@
 {
-  "private": true,
+  "private": false,
   "displayName": "Homebridge Xiaomi Devices",
   "description": "Provides Homebridge support for some Xiaomi devices. Brings the Night Mode Switch, which controls all the platform devices.",
   "name": "homebridge-xiaomi-devices",
