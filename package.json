@@ -38,6 +38,7 @@
   "dependencies": {
     "appdirectory": "^0.1.0",
     "fs": "^0.0.1-security",
+    "mkdirp": "^1.0.4",
     "path": "^0.12.7",
     "rxjs": "^7.5.2"
   }
