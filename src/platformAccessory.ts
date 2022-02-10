@@ -101,7 +101,7 @@ abstract class Light extends Device {
       on: () => {
         return this.device.getPower(); 
       },
-      brightness: () => {
+      brightness: () => {
         return this.device.getBrightness();
       },
       colorTemperature: () => {
@@ -150,7 +150,7 @@ export class CtMoonLight extends Light {
       });
 
     this.platform.nightSwitch.subscribe((nightMode: boolean) => {
-      this.runLoggedAction(async () => {
+      this.runLoggedAction(async () => {
         await this.device.setMoonMode(nightMode);
         await this.updateChars();
       }, "set night mode to " + nightMode);
@@ -205,7 +205,7 @@ export class ColorLight extends Light {
     });
 
     this.platform.nightSwitch.subscribe((nightMode: boolean) => {
-      this.runLoggedAction(async () => {
+      this.runLoggedAction(async () => {
         await this.device.reduceBrightnessRange(nightMode ? REDUCED_BRT_RANGE : 100);
         await this.updateChars();
       }, "set night mode to " + nightMode);
@@ -334,7 +334,7 @@ export class AirPurifier extends Device {
 
     this.purifierService.getCharacteristic(this.platform.Characteristic.Active)
     .onGet(this.get.active.bind(this))
-    .onSet(async (value) => {
+    .onSet(async (value) => {
       await this.runLoggedAction(async () => {
         if(!value) {
           await this.device.setMode(AirPurifierDevice.MODE_IDLE);
@@ -348,7 +348,7 @@ export class AirPurifier extends Device {
 
     this.purifierService.getCharacteristic(this.platform.Characteristic.TargetAirPurifierState)
       .onGet(this.get.targetState.bind(this))
-      .onSet(async (state) => {
+      .onSet(async (state) => {
         await this.runLoggedAction(async () => {
           await this.device.setMode(state == this.platform.Characteristic.TargetAirPurifierState.MANUAL ? AirPurifierDevice.MODE_FAVORITE : (this.device.isNightMode() ? AirPurifierDevice.MODE_SILENT : AirPurifierDevice.MODE_AUTO));
           await this.updateChars();
@@ -357,7 +357,7 @@ export class AirPurifier extends Device {
     
     this.purifierService.getCharacteristic(this.platform.Characteristic.RotationSpeed)
     .onGet(this.get.favoriteLevel.bind(this))
-    .onSet(async (level) => {
+    .onSet(async (level) => {
       await this.runLoggedAction(async () => {
         await this.device.setFavoriteLevel(level as number);
         await this.updateChars();
@@ -365,7 +365,7 @@ export class AirPurifier extends Device {
     });
 
     this.platform.nightSwitch.subscribe((nightMode: boolean) => {
-      this.runLoggedAction(async () => {
+      this.runLoggedAction(async () => {
         await this.device.setNightMode(nightMode);
         await this.updateChars();
       }, "set night mode to " + nightMode);
@@ -508,7 +508,7 @@ export class RobotVacuum extends Device {
     this.fanService.setCharacteristic(this.platform.Characteristic.Name, this.vacuum.context.device.name + " Fan");
 
     this.fanService.getCharacteristic(this.platform.Characteristic.On)
-    .onGet(() => {
+    .onGet(() => {
       return true;
     })
     .onSet(async () => {
@@ -534,7 +534,7 @@ export class RobotVacuum extends Device {
     this.waterService.setCharacteristic(this.platform.Characteristic.Name, this.vacuum.context.device.name + " Water Flow");
 
     this.waterService.getCharacteristic(this.platform.Characteristic.On)
-    .onGet(() => {
+    .onGet(() => {
       return true;
     })
     .onSet(async () => {
