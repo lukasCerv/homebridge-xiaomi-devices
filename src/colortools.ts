@@ -15,7 +15,7 @@ export function convertHomeKitColorTemperatureToHomeKitColor(value) {
       : 104.492_161_993_938_88 * Math.log(dKelvin - 2) - 0.445_969_504_695_791_33 * (dKelvin - 2) - 155.254_855_627_091_79,
     dKelvin > 66
       ? 255
-      : 115.679_944_010_661_47 * Math.log(dKelvin - 10) + 0.827_409_606_400_739_5 * (dKelvin - 10) - 254.769_351_841_209_02
+      : 115.679_944_010_661_47 * Math.log(dKelvin - 10) + 0.827_409_606_400_739_5 * (dKelvin - 10) - 254.769_351_841_209_02,
   ].map(v => Math.max(0, Math.min(255, v)) / 255);
   const max = Math.max(...rgb);
   const min = Math.min(...rgb);
@@ -41,6 +41,6 @@ export function convertHomeKitColorTemperatureToHomeKitColor(value) {
   return {
     h: Math.round(h),
     s: Math.round(s),
-    b: Math.round(b)
+    b: Math.round(b),
   };
 }

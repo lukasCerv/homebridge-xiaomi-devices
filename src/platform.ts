@@ -14,9 +14,12 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
   isNightMode() {
     return this.nightMode;
   }
+
   setNightMode(mode: boolean):void {
     this.nightMode = mode;
-    for(let l of this.nightModeSubscribers) l.next(mode);
+    for(const l of this.nightModeSubscribers) {
+      l.next(mode);
+    }
   }
 
   private nightModeSubscribers: Subscriber<boolean>[] = [];
@@ -51,7 +54,7 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
     this.log.info(`Adding ${addedDevices.length} lights`);
 
     for (const device of addedDevices){
-      this.getAccessory(device, "", (existing: PlatformAccessory) => {
+      this.getAccessory(device, '', (existing: PlatformAccessory) => {
         this.log.info('Restoring from cache:', device.name);
         existing.context.device = device;
         this.addAccessory(device, existing, (acc: PlatformAccessory) => this.updatePlatformAccessory(acc));
@@ -63,15 +66,18 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
     }
   };
 
-  private getAccessory(device: any, uuid_postfix: string, cached: Function, created: Function) {
+  private getAccessory(device: any, uuid_postfix: string, cached: (created: PlatformAccessory) => any, created: (cached: PlatformAccessory) => any) {
     const uuid = this.api.hap.uuid.generate(device.ipAddress + uuid_postfix);
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
-    if(existingAccessory) return cached(existingAccessory);
-    else return created(new this.api.platformAccessory(device.name, uuid));
+    if(existingAccessory) {
+      return cached(existingAccessory);
+    } else {
+      return created(new this.api.platformAccessory(device.name, uuid));
+    }
   }
 
-  private addAccessory(device: any, accessory: PlatformAccessory, callback: Function){
+  private addAccessory(device: any, accessory: PlatformAccessory, callback: (accessory: PlatformAccessory) => void){
     /*let subAccessory = (uuid_suffix: string) => {
       let acc: any = null;
       this.getAccessory(device, uuid_suffix, (cached: PlatformAccessory) => {
@@ -83,12 +89,12 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
       });
       return acc;
     }*/
-    
+
     switch(device.type){
-      case "ct_moon_light": new CtMoonLight(this, accessory); break;
-      case "color_light": new ColorLight(this, accessory); break;
-      case "air_purifier": new AirPurifier(this, accessory); break;
-      case "vacuum_cleaner": new RobotVacuum(this, accessory); break;
+      case 'ct_moon_light': new CtMoonLight(this, accessory); break;
+      case 'color_light': new ColorLight(this, accessory); break;
+      case 'air_purifier': new AirPurifier(this, accessory); break;
+      case 'vacuum_cleaner': new RobotVacuum(this, accessory); break;
     }
     callback(accessory);
   }
@@ -102,8 +108,8 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
   }
 
   private addMoonSwitch() {
-    this.log.info("Adding Moon Switch");
-    const uuid = this.api.hap.uuid.generate("yeelight-moon-switch");
+    this.log.info('Adding Moon Switch');
+    const uuid = this.api.hap.uuid.generate('yeelight-moon-switch');
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
     if (existingAccessory) {
       // the accessory already exists
@@ -115,7 +121,7 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
       this.log.info('Adding new moon switch.');
 
       // create a new accessory
-      const accessory = new this.api.platformAccessory("Moon Switch", uuid);
+      const accessory = new this.api.platformAccessory('Moon Switch', uuid);
 
       new MoonSwitch(this, accessory);
 
