@@ -1,0 +1,63 @@
+{
+  "pluginAlias": "XiaomiDevicesPlatform",
+  "pluginType": "platform",
+  "singular": true,
+  "schema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "title": "Name",
+        "type": "string",
+        "default": "XiaomiDevicesPlatform",
+        "required": true
+      },
+      "debugLogging": {
+        "title": "Verbose Logging",
+        "type": "boolean",
+        "default": "false",
+        "required": false,
+        "description": "Will do extra logging for all actions"
+      },
+      "devices": {
+        "type": "array",
+        "items": {
+          "title": "Add Devices",
+          "description": "Add devices manually based on their IP address and token.",
+          "type": "object",
+          "properties": {
+            "ipAddress": {
+              "title": "IP Address of the device",
+              "type": "string",
+              "required": true,
+              "description": "LAN IP address of the device"
+            },
+            "token": {
+              "title": "Encryption Token",
+              "type": "string",
+              "required": true,
+              "description": "Encryption token of the device"
+            },
+            "name": {
+              "title": "Name of the device",
+              "type": "string",
+              "required": false,
+              "description": "The name of the device"
+            },
+            "type": {
+              "title": "Device type",
+              "type": "string",
+              "default": "ct_moon_light",
+              "oneOf": [
+                { "title": "Lamp with moon mode", "enum": ["ct_moon_light"] },
+                { "title": "RGB Color light", "enum": ["color_light"] },
+                { "title": "Vacuum Cleaner (V2)", "enum": ["vacuum_cleaner"] },
+                { "title": "Air Purifier (V2)", "enum": ["air_purifier"] }
+              ],
+              "required": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
