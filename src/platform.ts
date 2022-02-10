@@ -66,7 +66,9 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
     }
   };
 
-  private getAccessory(device: any, uuid_postfix: string, cached: (created: PlatformAccessory) => any, created: (cached: PlatformAccessory) => any) {
+  private getAccessory(
+    device: {ipAddress: string; token: string; name: string},
+    uuid_postfix: string, cached: (created: PlatformAccessory) => void, created: (cached: PlatformAccessory) => void) {
     const uuid = this.api.hap.uuid.generate(device.ipAddress + uuid_postfix);
     const existingAccessory = this.accessories.find(accessory => accessory.UUID === uuid);
 
@@ -77,7 +79,7 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  private addAccessory(device: any, accessory: PlatformAccessory, callback: (accessory: PlatformAccessory) => void){
+  private addAccessory(device: {type: string}, accessory: PlatformAccessory, callback: (accessory: PlatformAccessory) => void){
     /*let subAccessory = (uuid_suffix: string) => {
       let acc: any = null;
       this.getAccessory(device, uuid_suffix, (cached: PlatformAccessory) => {
