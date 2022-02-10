@@ -45,14 +45,18 @@ const TRANSITION_DURATION = 0; // 30+
     name: "unknown",
 };*/
 
+type StrNumBoolObject = {[key: string]: string|number|boolean|null};
+
 abstract class XiaomiDevice {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private networkRef: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private deviceAPI: any;
   private network: Network;
 
   protected logger: (error: string) => void;
 
-  protected properties:any;
+  protected properties: StrNumBoolObject = {};
 
   constructor(logger: (error: string) => void) {
     this.network = new Network(logger);
@@ -83,20 +87,20 @@ abstract class XiaomiDevice {
     }
   }
 
-  async call(method: string, params:any = []) {
+  async call(method: string, params: {[key: number]: string|number|StrNumBoolObject}|StrNumBoolObject = []) {
     if(!this.deviceAPI) {
       return;
     }
     try {
       return await this.deviceAPI.call(method, params);
-    } catch(e:any) {
-      this.logger(e);
+    } catch(e: unknown) {
+      this.logger(e as string);
     }
   }
 }
 
 export class AirPurifierDevice extends XiaomiDevice {
-  protected properties:any = {
+  protected properties:StrNumBoolObject = {
     mode: null,
     favorite_level: null,
     temp_dec: null,
@@ -114,7 +118,7 @@ export class AirPurifierDevice extends XiaomiDevice {
   static MODE_FAVORITE = 'favorite';
 
   async setMode(value: string) {
-    if(value != AirPurifierDevice.MODE_IDLE) {
+    if(value !== AirPurifierDevice.MODE_IDLE) {
       this.lastMode = value;
     }
     this.properties.mode = value;
@@ -132,7 +136,7 @@ export class AirPurifierDevice extends XiaomiDevice {
   }
 
   getFavoriteLevel() {
-    return Math.round(this.properties.favorite_level/16*100);
+    return Math.round(this.properties.favorite_level as number/16*100);
   }
 
   isNightMode() {
@@ -140,7 +144,7 @@ export class AirPurifierDevice extends XiaomiDevice {
   }
 
   getTemperature() {
-    return this.properties.temp_dec*1.0/10;
+    return this.properties.temp_dec as number*1.0/10;
   }
 
   getHumidity() {
@@ -156,14 +160,14 @@ export class AirPurifierDevice extends XiaomiDevice {
   }
 
   async setNightMode(mode: boolean) {
-    if(this.nightMode == mode) {
+    if(this.nightMode === mode) {
       return;
     }
     this.nightMode = mode;
-    if(mode && this.properties.mode == AirPurifierDevice.MODE_AUTO) {
+    if(mode && this.properties.mode === AirPurifierDevice.MODE_AUTO) {
       await this.setMode(AirPurifierDevice.MODE_SILENT);
     }
-    if(!mode && this.properties.mode == AirPurifierDevice.MODE_SILENT) {
+    if(!mode && this.properties.mode === AirPurifierDevice.MODE_SILENT) {
       await this.setMode(AirPurifierDevice.MODE_AUTO);
     }
     if(mode) {
@@ -176,7 +180,7 @@ export class AirPurifierDevice extends XiaomiDevice {
 }
 
 export class VacuumDevice extends XiaomiDevice {
-  protected properties:any = {
+  protected properties:StrNumBoolObject = {
     state: null,
     error_code: null,
     battery: null,
@@ -225,11 +229,11 @@ export class VacuumDevice extends XiaomiDevice {
       {'did': 'water_level', 'siid': 2, 'piid': 5},
     ]);
     if(properties) {
-      this.properties.state = properties.find(prop => prop.did == 'state').value;
-      this.properties.error_code = properties.find(prop => prop.did == 'error_code').value;
-      this.properties.battery = properties.find(prop => prop.did == 'battery').value;
-      this.properties.fan_speed = properties.find(prop => prop.did == 'fan_speed').value;
-      this.properties.water_level = properties.find(prop => prop.did == 'water_level').value;
+      this.properties.state = properties.find(prop => prop.did === 'state').value;
+      this.properties.error_code = properties.find(prop => prop.did === 'error_code').value;
+      this.properties.battery = properties.find(prop => prop.did === 'battery').value;
+      this.properties.fan_speed = properties.find(prop => prop.did === 'fan_speed').value;
+      this.properties.water_level = properties.find(prop => prop.did === 'water_level').value;
     }
   }
 
@@ -247,11 +251,11 @@ export class VacuumDevice extends XiaomiDevice {
   }
 
   isBatteryLow() {
-    return this.properties.error_code == 4;
+    return this.properties.error_code === 4;
   }
 
   getFanSpeed() {
-    return this.properties.fan_speed * 25 + 25;
+    return this.properties.fan_speed as number * 25 + 25;
   }
 
   async setFanSpeed(speed: number) {
@@ -261,7 +265,7 @@ export class VacuumDevice extends XiaomiDevice {
   }
 
   getWaterLevel() {
-    return this.properties.water_level * 25 + 25;
+    return this.properties.water_level as number * 25 + 25;
   }
 
   async setWaterLevel(level: number) {
@@ -272,7 +276,7 @@ export class VacuumDevice extends XiaomiDevice {
 }
 
 export class YeelightDevice extends XiaomiDevice {
-  protected properties:any = {
+  protected properties:StrNumBoolObject = {
     power: null,
     bright: null,
     ct: null,
@@ -293,7 +297,7 @@ export class YeelightDevice extends XiaomiDevice {
   }
 
   async setBrightness(value: number) {
-    value = 0;
+    value === value;
   }
 
   getBrightness():number {
@@ -314,7 +318,7 @@ export class YeelightDevice extends XiaomiDevice {
 }
 
 export class CtMoonDevice extends YeelightDevice {
-  protected properties:any = {
+  protected properties:StrNumBoolObject = {
     power: null,
     bright: null,
     nl_br: null,
@@ -333,12 +337,12 @@ export class CtMoonDevice extends YeelightDevice {
   async getProperties(keys?: string[]): Promise<void> {
     await super.getProperties(keys);
     if(this.getPower()) {
-      this.globalBright = parseInt(this.nightMode ? this.properties.nl_br : this.properties.bright);
+      this.globalBright = parseInt(this.nightMode ? this.properties.nl_br as string : this.properties.bright as string);
     }
   }
 
   async setMoonMode(mode: boolean) {
-    if(this.nightMode == mode) {
+    if(this.nightMode === mode) {
       return;
     }
 
@@ -392,7 +396,7 @@ export class CtMoonDevice extends YeelightDevice {
 }
 
 export class ColorDevice extends YeelightDevice {
-  protected properties:any = {
+  protected properties:StrNumBoolObject = {
     power: null,
     bright: null,
     ct: null,
@@ -409,12 +413,12 @@ export class ColorDevice extends YeelightDevice {
   }
 
   async reduceBrightnessRange(limit: number) {
-    if(this.reducedRange == limit) {
+    if(this.reducedRange === limit) {
       return;
     }
     const brighter = (limit > this.reducedRange);
 
-    this.tempBright = Math.ceil(this.properties.bright/this.reducedRange*limit);
+    this.tempBright = Math.ceil(this.properties.bright as number/this.reducedRange*limit);
     this.reducedRange = limit;
 
     if(!this.getPower()) {
@@ -456,7 +460,7 @@ export class ColorDevice extends YeelightDevice {
   }
 
   getBrightness() {
-    return (this.tempBright ? this.tempBright : this.properties.bright)/this.reducedRange*100;
+    return (this.tempBright ? this.tempBright : this.properties.bright as number)/this.reducedRange*100;
   }
 
   async setHue(value: number) {
@@ -464,7 +468,8 @@ export class ColorDevice extends YeelightDevice {
       return;
     }
     this.properties.hue = value;
-    await this.call('set_hsv', [value, parseInt(this.properties.sat), (TRANSITION_DURATION ? 'smooth' : 'sudden'), TRANSITION_DURATION]);
+    await this.call('set_hsv',
+      [value, parseInt(this.properties.sat as string), (TRANSITION_DURATION ? 'smooth' : 'sudden'), TRANSITION_DURATION]);
   }
 
   getHue() {
@@ -476,7 +481,8 @@ export class ColorDevice extends YeelightDevice {
       return;
     }
     this.properties.sat = value;
-    await this.call('set_hsv', [parseInt(this.properties.hue), value, (TRANSITION_DURATION ? 'smooth' : 'sudden'), TRANSITION_DURATION]);
+    await this.call('set_hsv',
+      [parseInt(this.properties.hue as string), value, (TRANSITION_DURATION ? 'smooth' : 'sudden'), TRANSITION_DURATION]);
   }
 
   getSaturation() {
