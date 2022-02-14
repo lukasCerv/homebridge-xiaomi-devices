@@ -3,7 +3,7 @@
   "displayName": "Homebridge Xiaomi Devices",
   "description": "Provides Homebridge support for some Xiaomi devices. Brings the Night Mode Switch, which controls all the platform devices.",
   "name": "homebridge-xiaomi-devices",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=14.18.1",
