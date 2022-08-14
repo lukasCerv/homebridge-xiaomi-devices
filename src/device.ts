@@ -72,7 +72,7 @@ abstract class XiaomiDevice {
       await this.getProperties();
     } catch(e){
       handle.release();
-      throw e;
+      this.logger(e as string);
     }
 
     handle.release();
@@ -201,7 +201,7 @@ export class VacuumDevice extends XiaomiDevice {
     0: 'No error',
     1: 'Left Wheel stuck',
     2: 'Right Wheel stuck',
-    3: 'Cliff error',
+    3: 'Cliff sensor error',
     4: 'Low battery',
     5: 'Bump error',
     6: 'Main Brush Error',
@@ -218,6 +218,15 @@ export class VacuumDevice extends XiaomiDevice {
     STANDARD: 1,
     MEDIUM: 2,
     HIGH: 3,
+  };
+
+  static STATUS_ERROR = {
+    NONE: 0,
+    FAN: 1,
+    WATER: 2,
+    STUCK: 3,
+    LOW_BATTERY: 4,
+    OTHER: 5,
   };
 
   async getProperties() {
@@ -272,6 +281,21 @@ export class VacuumDevice extends XiaomiDevice {
     const lev = Math.floor((level - 25)/25);
     this.properties.water_level = lev;
     await this.call('set_properties', [{'did': 'water_level', 'siid': 2, 'piid': 5, 'value': lev}]);
+  }
+
+  getError(): number {
+    if(this.getState() !== VacuumDevice.STATE.ERROR || !this.properties.error_code) {
+      return VacuumDevice.STATUS_ERROR.NONE;
+    } else if([1, 2, 3, 5, 6, 7].includes(this.properties.error_code as number)) {
+      return VacuumDevice.STATUS_ERROR.STUCK;
+    } else {
+      switch(this.properties.error_code as number) {
+        case 4: return VacuumDevice.STATUS_ERROR.LOW_BATTERY;
+        case 8: return VacuumDevice.STATUS_ERROR.FAN;
+        case 11: return VacuumDevice.STATUS_ERROR.WATER;
+        default: return VacuumDevice.STATUS_ERROR.OTHER;
+      }
+    }
   }
 }
 

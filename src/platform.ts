@@ -37,7 +37,11 @@ export class XiaomiYeelightTestPlatform implements DynamicPlatformPlugin {
 
     this.api.on('didFinishLaunching', () => {
       log.debug('Executed didFinishLaunching callback');
-      this.addMoonSwitch();
+
+      if(this.config.showNighSwitch) {
+        this.addMoonSwitch();
+      }
+
       this.discoverDevices();
     });
   }

@@ -433,6 +433,7 @@ export class RobotVacuum extends Device {
   private batteryService: Service;
   private fanService: Service;
   private waterService: Service;
+  private homeService: Service;
   protected device = new VacuumDevice((arg: string) => {
     if(this.isDebugLogging()) {
       this.platform.log.info(arg);
@@ -465,10 +466,12 @@ export class RobotVacuum extends Device {
       this.vacuum.addService(this.platform.Service.Fan, 'water_flow', 'FAN_water_flow');
     this.setupWater();
 
+    this.homeService = this.vacuum.getService(this.platform.Service.ContactSensor) ||
+      this.vacuum.addService(this.platform.Service.ContactSensor);
+    this.setupHome();
+
     this.updateChars();
   }
-
-
 
   private get = {
     state: () => {
@@ -490,12 +493,29 @@ export class RobotVacuum extends Device {
     waterLevel: () => {
       return this.device.getWaterLevel();
     },
+    statusGeneralFault: () => {
+      return !!this.device.getError()/* === VacuumDevice.STATUS_ERROR.OTHER*/;
+    },
+    statusJammed: () => {
+      if(this.device.getError() === VacuumDevice.STATUS_ERROR.STUCK) {
+        this.platform.log.info('\r\n\r\nVaccuum stuck.\r\n\r\n');
+      }
+      return this.device.getError() === VacuumDevice.STATUS_ERROR.STUCK;
+    },
+    statusFanFault: () => {
+      return this.device.getError() === VacuumDevice.STATUS_ERROR.FAN;
+    },
+    statusWaterFault: () => {
+      return this.device.getError() === VacuumDevice.STATUS_ERROR.WATER;
+    },
   };
 
   protected async updateChars() {
     await super.updateChars(async () => await this.device.getProperties());
 
     this.vacuumService.getCharacteristic(this.platform.Characteristic.On).updateValue(this.get.state());
+    //this.vacuumService.getCharacteristic(this.platform.Characteristic.StatusFault).updateValue(this.get.statusGeneralFault());
+    //this.vacuumService.getCharacteristic(this.platform.Characteristic.StatusJammed).updateValue(this.get.statusJammed());
 
     this.batteryService.getCharacteristic(this.platform.Characteristic.StatusLowBattery).updateValue(this.get.lowBattery());
     this.batteryService.getCharacteristic(this.platform.Characteristic.BatteryLevel).updateValue(this.get.battery());
@@ -503,9 +523,14 @@ export class RobotVacuum extends Device {
 
     this.fanService.getCharacteristic(this.platform.Characteristic.On).updateValue(true);
     this.fanService.getCharacteristic(this.platform.Characteristic.RotationSpeed).updateValue(this.get.fanSpeed());
+    this.fanService.getCharacteristic(this.platform.Characteristic.StatusFault).updateValue(this.get.statusFanFault());
 
     this.waterService.getCharacteristic(this.platform.Characteristic.On).updateValue(true);
     this.waterService.getCharacteristic(this.platform.Characteristic.RotationSpeed).updateValue(this.get.waterLevel());
+    this.waterService.getCharacteristic(this.platform.Characteristic.StatusFault).updateValue(this.get.statusWaterFault());
+
+    this.homeService.getCharacteristic(this.platform.Characteristic.ContactSensorState).updateValue(!this.get.charging());
+    /*this.homeService.getCharacteristic(this.platform.Characteristic.StatusFault).updateValue(this.get.statusGeneralFault());*/
   }
 
   private setupVacuum() {
@@ -519,6 +544,12 @@ export class RobotVacuum extends Device {
         }, 'set power to ' + value);
       })
       .onGet(this.get.state.bind(this));
+
+    /*this.vacuumService.getCharacteristic(this.platform.Characteristic.StatusFault)
+      .onGet(this.get.statusGeneralFault.bind(this));
+
+    this.vacuumService.getCharacteristic(this.platform.Characteristic.StatusJammed)
+      .onGet(this.get.statusJammed.bind(this));*/
   }
 
   private setupBattery() {
@@ -558,6 +589,9 @@ export class RobotVacuum extends Device {
           await this.updateChars();
         }, 'set fan speed to ' + value);
       });
+
+    this.fanService.getCharacteristic(this.platform.Characteristic.StatusFault)
+      .onGet(this.get.statusFanFault.bind(this));
   }
 
   private setupWater() {
@@ -584,6 +618,19 @@ export class RobotVacuum extends Device {
           await this.updateChars();
         }, 'set water level to ' + value);
       });
+
+    this.waterService.getCharacteristic(this.platform.Characteristic.StatusFault)
+      .onGet(this.get.statusWaterFault.bind(this));
+  }
+
+  private setupHome() {
+    this.homeService.setCharacteristic(this.platform.Characteristic.Name, this.vacuum.context.device.name + ' Status');
+
+    this.homeService.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      .onGet(() => !this.get.charging());
+
+    this.homeService.getCharacteristic(this.platform.Characteristic.StatusFault)
+      .onGet(this.get.statusGeneralFault.bind(this));
   }
 }
 

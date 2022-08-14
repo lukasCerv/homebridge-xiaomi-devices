@@ -18,6 +18,13 @@
         "required": false,
         "description": "Will do extra logging for all actions"
       },
+      "showNighSwitch": {
+        "title": "Show Night Switch",
+        "type": "boolean",
+        "default": "true",
+        "required": false,
+        "description": "Turn off to hide night switch"
+      },
       "devices": {
         "type": "array",
         "items": {
